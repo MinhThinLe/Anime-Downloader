@@ -1,5 +1,6 @@
 mod config_parser;
 mod download;
+mod update_config;
 
 use std::process::exit;
 
@@ -15,11 +16,10 @@ fn main() {
             Config::default()
         }
         Err(ParseConfigError::InvalidTOML) => {
-            println!("Invalid TOML");
+            println!("Invalid Config");
             exit(1)
         }
     };
-    println!("Parsing returned {:#?}", config);
-
     download(&mut config);
+    config.write_to_disk();
 }

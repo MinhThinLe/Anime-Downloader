@@ -5,7 +5,7 @@ use std::process::exit;
 use toml::{Table, Value};
 
 const CONFIG_PATH: &str = ".config/anime-dowloader/";
-const CONFIG_FILE: &str = "watchlist.toml";
+pub const CONFIG_FILE: &str = "watchlist.toml";
 
 #[derive(Debug, Default)]
 pub struct Config {
@@ -14,6 +14,7 @@ pub struct Config {
 
 #[derive(Debug)]
 pub struct AnimeEntry {
+    id :Box<str>,
     name: Box<str>,
     current_episode: u16,
     target_dir: PathBuf,
@@ -31,14 +32,16 @@ fn get_entry_number(table: &Value) -> Option<u8> {
 }
 
 impl AnimeEntry {
-    fn from_table(table: Value) -> Option<Self> {
+    fn from_table(id: String, table: Value) -> Option<Self> {
         let name = table.get("name")?.as_str()?.into();
         let current_episode = table.get("current_episode")?.as_integer()? as u16;
         let target_dir = table.get("directory")?.as_str()?.into();
+        let id = id.into();
 
         let entry_number = get_entry_number(&table);
 
         Some(Self {
+            id,
             name,
             entry_number,
             target_dir,
@@ -74,6 +77,18 @@ impl AnimeEntry {
     pub fn get_name(&self) -> &str {
         &self.name
     }
+
+    pub fn get_id(&self) -> &str {
+        &self.id
+    }
+    
+    pub fn get_entry_number(&self) -> Option<u8> {
+        self.entry_number
+    }
+
+    pub fn get_current_episode(&self) -> u16 {
+        self.current_episode
+    }
 }
 
 pub fn parse_config() -> Result<Config, ParseConfigError> {
@@ -91,7 +106,7 @@ pub fn parse_config() -> Result<Config, ParseConfigError> {
             // TODO add configuration options here
             continue;
         }
-        if let Some(entry) = AnimeEntry::from_table(item.1) {
+        if let Some(entry) = AnimeEntry::from_table(item.0, item.1) {
             config.watch_list.push(entry);
         }
     }
@@ -120,7 +135,7 @@ pub fn make_config() {
     }
 }
 
-fn get_config_path() -> PathBuf {
+pub fn get_config_path() -> PathBuf {
     let mut home = match std::env::home_dir() {
         Some(dir) => dir,
         None => {
