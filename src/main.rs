@@ -31,7 +31,7 @@ fn main() {
         config.write_to_disk();
 
         println!(
-            "Nothing of interest, going to sleep for {} seconds",
+            "All tasks finished, going to sleep for {} seconds",
             config.get_sleep_duration().as_secs()
         );
         std::thread::sleep(config.get_sleep_duration());

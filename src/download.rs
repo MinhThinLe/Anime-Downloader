@@ -13,6 +13,7 @@ pub fn download(config: &mut Config) -> Result<(), String> {
 }
 
 fn download_entry(entry: &mut AnimeEntry) -> Result<(), String> {
+    println!("Downloading {}", entry.get_name());
     let args = entry.get_download_arguments();
     let downloader = Command::new("ani-cli")
         .current_dir(entry.get_target_directory())
