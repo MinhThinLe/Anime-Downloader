@@ -1,20 +1,23 @@
 use std::fs::{self, File};
-use std::path::{PathBuf, Path};
+use std::path::{Path, PathBuf};
 use std::process::exit;
+use std::time::Duration;
 
 use toml::{Table, Value};
 
+const DEFAULT_SLEEP_SECONDS: u64 = 24 * 60;
 const CONFIG_PATH: &str = ".config/anime-dowloader/";
 pub const CONFIG_FILE: &str = "watchlist.toml";
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Config {
     pub watch_list: Vec<AnimeEntry>,
+    sleep_duration: Duration,
 }
 
 #[derive(Debug)]
 pub struct AnimeEntry {
-    id :Box<str>,
+    id: Box<str>,
     name: Box<str>,
     current_episode: u16,
     target_dir: PathBuf,
@@ -29,6 +32,31 @@ pub enum ParseConfigError {
 
 fn get_entry_number(table: &Value) -> Option<u8> {
     Some(table.get("select")?.as_integer()? as u8)
+}
+
+fn get_sleep_time(table: &Value) -> u64 {
+    let Some(sleep_time) = table.get("sleep_secs") else {
+        return DEFAULT_SLEEP_SECONDS;
+    };
+    let Some(sleep_time) = sleep_time.as_integer() else {
+        return DEFAULT_SLEEP_SECONDS;
+    };
+    sleep_time as u64
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            watch_list: vec![],
+            sleep_duration: Duration::from_secs(DEFAULT_SLEEP_SECONDS),
+        }
+    }
+}
+
+impl Config {
+    pub fn get_sleep_duration(&self) -> Duration {
+        self.sleep_duration
+    }
 }
 
 impl AnimeEntry {
@@ -57,10 +85,7 @@ impl AnimeEntry {
             self.name.to_string(),
         ];
         if let Some(select) = self.entry_number {
-            args.extend_from_slice(&[
-                "-S".to_string(),
-                select.to_string(),
-            ]);
+            args.extend_from_slice(&["-S".to_string(), select.to_string()]);
         }
 
         args
@@ -81,7 +106,7 @@ impl AnimeEntry {
     pub fn get_id(&self) -> &str {
         &self.id
     }
-    
+
     pub fn get_entry_number(&self) -> Option<u8> {
         self.entry_number
     }
@@ -103,7 +128,7 @@ pub fn parse_config() -> Result<Config, ParseConfigError> {
 
     for item in parsed {
         if (item.0) == "config" {
-            // TODO add configuration options here
+            config.sleep_duration = Duration::from_secs(get_sleep_time(&item.1));
             continue;
         }
         if let Some(entry) = AnimeEntry::from_table(item.0, item.1) {

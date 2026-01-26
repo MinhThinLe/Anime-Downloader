@@ -20,6 +20,20 @@ fn main() {
             exit(1)
         }
     };
-    download(&mut config);
-    config.write_to_disk();
+    loop {
+        match download(&mut config) {
+            Ok(_) => (),
+            Err(error) => {
+                println!("{error}, exiting now");
+                exit(1)
+            }
+        };
+        config.write_to_disk();
+
+        println!(
+            "Nothing of interest, going to sleep for {} seconds",
+            config.get_sleep_duration().as_secs()
+        );
+        std::thread::sleep(config.get_sleep_duration());
+    }
 }

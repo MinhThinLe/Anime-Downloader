@@ -1,17 +1,18 @@
-use std::process::{Command, exit};
-use crate::{Config, AnimeEntry};
+use crate::{AnimeEntry, Config};
+use std::process::Command;
 
 const SUCCESS: i32 = 0;
 const COMMAND_NOT_FOUND: i32 = 127;
 const FAILURE: i32 = 1;
 
-pub fn download(config: &mut Config) {
+pub fn download(config: &mut Config) -> Result<(), String> {
     for entry in config.watch_list.iter_mut() {
-        download_entry(entry);
+        download_entry(entry)?;
     }
+    Ok(())
 }
 
-fn download_entry(entry: &mut AnimeEntry) {
+fn download_entry(entry: &mut AnimeEntry) -> Result<(), String> {
     let args = entry.get_download_arguments();
     let downloader = Command::new("ani-cli")
         .current_dir(entry.get_target_directory())
@@ -19,19 +20,18 @@ fn download_entry(entry: &mut AnimeEntry) {
         .status();
     let code = match downloader {
         Ok(status_code) => status_code.code(),
-        Err(error) => {
-            println!("Error {error} unhandled, exiting now");
-            exit(1);
-        }
+        Err(error) => return Err(error.to_string()),
     };
     let Some(code) = code else {
-        return;
+        return Err("An unknown error occurred".to_string());
     };
-    
+
     match code {
         SUCCESS => entry.next_episode(),
         COMMAND_NOT_FOUND => println!("ani-cli executable not found, maybe try installing it?"),
-        FAILURE => println!("Failed to download {}, check if it's a unique name?", entry.get_name()),
+        FAILURE => (),
         code => println!("Unknown return code {code}"),
     };
+
+    Ok(())
 }
