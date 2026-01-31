@@ -23,7 +23,7 @@ impl App {
         }
         self.write_to_disk();
         println!(
-            "All tasks finished, going to sleep for {}",
+            "All tasks finished, going to sleep for {} seconds",
             self.get_sleep_duration().as_secs()
         );
         self.sleep();
