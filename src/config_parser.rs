@@ -1,13 +1,11 @@
-use std::fs::{self, File};
+use crate::paths::*;
+use std::fs;
 use std::path::{Path, PathBuf};
-use std::process::exit;
 use std::time::Duration;
 
 use toml::{Table, Value};
 
 const DEFAULT_SLEEP_SECONDS: u64 = 24 * 60 * 60;
-const CONFIG_PATH: &str = ".config/anime-dowloader/";
-pub const CONFIG_FILE: &str = "watchlist.toml";
 
 #[derive(Debug, Default)]
 pub struct App {
@@ -149,47 +147,4 @@ fn parse_settings(table: &Value) -> Settings {
     Settings {
         sleep_duration: Duration::from_secs(get_sleep_time(table)),
     }
-}
-
-pub fn make_config() {
-    let mut config_path = get_config_path();
-    let error = fs::create_dir_all(&config_path);
-    match error {
-        Ok(_) => (),
-        Err(error) => {
-            println!("Encountered error {error} while making config directory");
-            exit(1);
-        }
-    }
-    config_path.push(CONFIG_FILE);
-    let error = File::create(config_path);
-    match error {
-        Ok(_) => (),
-        Err(error) => {
-            println!("Encountered error {error} while making config file");
-            exit(1);
-        }
-    }
-}
-
-pub fn get_config_file_path() -> PathBuf {
-    let mut config_path = get_config_path();
-    config_path.push(CONFIG_FILE);
-    return config_path;
-}
-
-pub fn get_config_path() -> PathBuf {
-    let mut home_path = get_home_path();
-    home_path.push(CONFIG_PATH);
-    return home_path;
-}
-
-pub fn get_home_path() -> PathBuf {
-    match std::env::home_dir() {
-        Some(dir) => return dir,
-        None => {
-            println!("Couldn't get the user's home directory, exiting");
-            exit(1);
-        }
-    };
 }

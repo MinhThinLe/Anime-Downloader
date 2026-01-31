@@ -1,7 +1,7 @@
 use std::fmt::Display;
 use std::fs::write;
 
-use crate::config_parser::get_config_file_path;
+use crate::paths::*;
 use crate::{AnimeEntry, App};
 
 impl App {
