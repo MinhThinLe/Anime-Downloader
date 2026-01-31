@@ -1,20 +1,24 @@
-use std::process::exit;
-use std::fs::{self, File, exists };
+use std::fs::{self, File, exists};
 use std::path::PathBuf;
+use std::process::exit;
 
 const CONFIG_PATH: &str = ".config/anime-dowloader/";
 const CONFIG_FILE: &str = "watchlist.toml";
 const STATE_PATH: &str = ".local/state/anime-downloader";
 const STATE_FILE: &str = "anime-downloader.state";
 
-const ERROR_UNREADABLE_FILESYSTEM: &str = "Unable to read the system's file structure, maybe you've got a permission issue?";
+const ERROR_UNREADABLE_FILESYSTEM: &str =
+    "Unable to read the system's file structure, maybe you've got a permission issue?";
 
 fn make_config_path() {
     let config_path = get_config_path();
     match fs::create_dir_all(&config_path) {
         Ok(_) => (),
         Err(error) => {
-            println!("Unable to mkdir {:?} due to {}, exiting now", config_path, error);
+            println!(
+                "Unable to mkdir {:?} due to {}, exiting now",
+                config_path, error
+            );
             exit(1);
         }
     }
@@ -25,7 +29,10 @@ fn make_config_file() {
     match File::create(&config_file) {
         Ok(_) => (),
         Err(error) => {
-            println!("Unable to touch {:?} due to {}, exiting now", config_file, error);
+            println!(
+                "Unable to touch {:?} due to {}, exiting now",
+                config_file, error
+            );
             exit(1);
         }
     }
@@ -36,7 +43,10 @@ fn make_state_path() {
     match fs::create_dir_all(&state_path) {
         Ok(_) => (),
         Err(error) => {
-            println!("Unable to mkdir {:?} due to {}, exiting now", state_path, error);
+            println!(
+                "Unable to mkdir {:?} due to {}, exiting now",
+                state_path, error
+            );
             exit(1);
         }
     }
@@ -47,7 +57,10 @@ fn make_state_file() {
     match File::create(&state_file_path) {
         Ok(_) => (),
         Err(error) => {
-            println!("Unable to touch {:?} due to {}, exiting now", state_file_path, error);
+            println!(
+                "Unable to touch {:?} due to {}, exiting now",
+                state_file_path, error
+            );
             exit(1);
         }
     }

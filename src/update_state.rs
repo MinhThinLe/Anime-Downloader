@@ -16,7 +16,7 @@ impl App {
             Err(_) => {
                 make_state();
                 self.write_state_file();
-            },
+            }
         }
     }
 }

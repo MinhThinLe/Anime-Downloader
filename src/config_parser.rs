@@ -3,6 +3,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
+use toml::map::Map;
 use toml::{Table, Value};
 
 const DEFAULT_SLEEP_SECONDS: u64 = 24 * 60 * 60;
@@ -28,7 +29,7 @@ pub struct AnimeEntry {
 }
 
 #[derive(Debug)]
-pub enum ParseConfigError {
+pub enum ParseError {
     InvalidTOML,
 }
 
@@ -59,29 +60,44 @@ impl App {
         self.settings.sleep_duration
     }
 
-    pub fn new_from_config() -> Result<App, ParseConfigError> {
-        let config_file = get_config_file_path();
-        let Ok(config_file) = fs::read_to_string(config_file) else {
-            make_config();
-            // If you fail at first, simply try again
-            return App::new_from_config();
+    fn resume_from_state(&mut self) {
+        let Ok(parsed) = read_state() else {
+            return;
         };
-        let parsed = config_file
-            .parse::<Table>()
-            .or(Err(ParseConfigError::InvalidTOML))?;
 
+        for (table_name, value) in parsed {
+            let Some(entry) = self.get_entry_mut(&table_name) else {
+                continue;
+            };
+            entry.current_episode = value
+                .get("current_episode")
+                .expect("INVALID STATEFILE")
+                .as_integer()
+                .expect("INVALID STATEFILE") as u16;
+        }
+    }
+
+    fn get_entry_mut(&mut self, entry_id: &str) -> Option<&mut AnimeEntry> {
+        self.watch_list
+            .iter_mut()
+            .find(|entry| entry.get_id() == entry_id)
+    }
+
+    pub fn new_from_config() -> Result<App, ParseError> {
+        let parsed = read_config()?;
         let mut app = App::default();
 
-        for item in parsed {
-            if (item.0) == "config" {
-                app.settings = parse_settings(&item.1);
+        for (table_name, value) in parsed {
+            if (table_name) == "config" {
+                app.settings = parse_settings(&value);
                 continue;
             }
-            if let Some(entry) = AnimeEntry::from_table(item.0, item.1) {
+            if let Some(entry) = AnimeEntry::from_table(table_name, value) {
                 app.watch_list.push(entry);
             }
         }
 
+        app.resume_from_state();
         Ok(app)
     }
 }
@@ -147,4 +163,25 @@ fn parse_settings(table: &Value) -> Settings {
     Settings {
         sleep_duration: Duration::from_secs(get_sleep_time(table)),
     }
+}
+
+fn read_config() -> Result<Map<String, Value>, ParseError> {
+    let config_file = get_config_file_path();
+    let Ok(config_file) = fs::read_to_string(config_file) else {
+        make_config();
+        return read_config();
+    };
+    config_file
+        .parse::<Table>()
+        .or(Err(ParseError::InvalidTOML))
+}
+
+fn read_state() -> Result<Map<String, Value>, ParseError> {
+    let state_file = get_state_file_path();
+    let Ok(state_file) = fs::read_to_string(state_file) else {
+        make_state();
+        return read_state();
+    };
+
+    state_file.parse::<Table>().or(Err(ParseError::InvalidTOML))
 }
