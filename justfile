@@ -6,4 +6,4 @@ build:
     cargo build --release
 
 install: build
-    install -Dm 755 target/release/anime-downloader /user/bin
+    install -Dm 755 target/release/anime-downloader /usr/bin
