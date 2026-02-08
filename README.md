@@ -26,7 +26,20 @@ All the configuration options for this program is contained within the
 # Seconds to sleep after checking for possible downloads
 sleep_secs = sleep_secs
 ```
-# Usage instructions
+
+# Installation
+
+Since there isn't a binary package for this project yet, you'll have to build
+it from source. To do so, first install all the dependencies listed in the
+dependencies section.
+
+To install, run the command
+
+```sh
+just install
+```
+
+# Configuration
 
 - Run the program once for it to generate it's configuration directory or
   create the directory (and file) `~/.config/anime-downloader/watchlist.toml`
@@ -55,6 +68,12 @@ advisable to start/enable the bundled systemd-unit with
 ```sh
 systemctl start/enable --user anime-downloader
 ```
+
+# Contribution
+
+All contributions are appreciated. If you have a suggestion/feature request or
+bug report, please do so by submitting a new issue or better yet, create a new
+pull request. 
 
 # Special thanks
 
