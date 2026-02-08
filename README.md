@@ -1,4 +1,4 @@
-# Anime downloader (for a lack of a better name)
+# Anid
 
 This tool makes use of ani-cli to download anime episodes to a designated
 directory
