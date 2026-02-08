@@ -17,7 +17,7 @@ impl App {
     }
 
     pub fn main_loop(&mut self) {
-        if let Err(error) =  self.download() {
+        if let Err(error) = self.download() {
             println!("{error}, exiting now");
             exit(1);
         }

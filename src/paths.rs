@@ -1,4 +1,5 @@
 use std::fs::{self, File, exists};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::exit;
 
@@ -6,6 +7,7 @@ const CONFIG_PATH: &str = ".config/anid/";
 const CONFIG_FILE: &str = "watchlist.toml";
 const STATE_PATH: &str = ".local/state/anid/";
 const STATE_FILE: &str = "anime-downloader.state";
+const CONFIG_FILE_CONTENT: &str = include_str!("../examples/watchlist.toml");
 
 const ERROR_UNREADABLE_FILESYSTEM: &str =
     "Unable to read the system's file structure, maybe you've got a permission issue?";
@@ -26,8 +28,8 @@ fn make_config_path() {
 
 fn make_config_file() {
     let config_file = get_config_file_path();
-    match File::create(&config_file) {
-        Ok(_) => (),
+    let mut config_file = match File::create(&config_file) {
+        Ok(config_file) => config_file,
         Err(error) => {
             println!(
                 "Unable to touch {:?} due to {}, exiting now",
@@ -35,6 +37,10 @@ fn make_config_file() {
             );
             exit(1);
         }
+    };
+
+    if let Err(error) = config_file.write_all(CONFIG_FILE_CONTENT.as_bytes()) {
+        println!("Unable to create config file due to {error}");
     }
 }
 
