@@ -5,21 +5,27 @@ directory
 
 ## Dependencies
 
-- [Just](https://just.systems): Build tool
+- [Just](https://just.systems): build tool
 - [ani-cli](https://github.com/pystardust/ani-cli): Download/scrape backend
 
 ## Motivation
 
-I wanted something akin to the arr stack but uses direct downloads instead of
-torrent/usenet since
-- There aren't many public torrent trackers.
-- Many torrents tracked are dead torrents (have 0 seeders).
-- The ones that are active often only have 2 - 3 seeders and the
-  download/upload rate is glacial 
-- Having to manually ssh into my Jellyfin server gets old after 2 - 3 times.
-- Do you think I can/would shell out 10 bucks a month or so for a usenet
-  provider?
+I wanted something akin to the arr stack but uses direct downloads instead
+since
+- There aren't many public torrent trackers
+- Many torrents tracked are dead torrents (have 0 seeders)
+- Having to manually ssh into my Jellyfin server gets old after 2 - 3 times
 
+## Configuration
+
+All the configuration options for this program is contained within the
+`config` table, as demonstrated by the example config below
+
+```toml
+[config]
+# Seconds to sleep after checking for possible downloads
+sleep_secs = sleep_secs
+```
 
 ## Installation
 
@@ -35,28 +41,22 @@ just install
 
 ## Configuration
 
-All the configurations for the program is contained within the file located at
-`~/.config/anime-downloader/watchlist.toml`. Run the program once to generate
-it or write one yourself using the one below as reference.
-
+- Run the program once for it to generate it's configuration directory or
+  create the directory (and file) `~/.config/anime-downloader/watchlist.toml`
+  yourself
+- Make a config file in the following form
 ```toml
-[config]
-# Seconds to sleep after checking for possible downloads
-sleep_secs = sleep_secs
-
 [id]
 name = "anime_name"
-directory = "~/Videos/target_directory"
-select = 1
-current_episode = 1 # Optional
+directory = "target_directory"
+select = entry_number
+current_episode = episode_number
 ```
-
-Where:
+where:
 - `id` is a valid TOML table name (and isn't "config" for obvious reasons)
 - `anime_name` is the name of the anime you're watching
 - `target_directory` is the full raw path (/home/user/...) as environment
-  variable substitution ($HOME/...) isn't supported yet. (`~` could be used in
-  $HOME's place however)
+  variable substitution ($HOME/...) isn't supported yet nor is ~
 - `entry_number` is the entry number to choose in case there are multiple
   matching titles
 - `episode_number` is the episode number to begin download (the program will
