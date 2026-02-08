@@ -1,5 +1,8 @@
-use crate::{AnimeEntry, App};
-use std::process::{Command, exit};
+use crate::{AnimeEntry, App, paths::make_download_directory};
+use std::{
+    fs::exists,
+    process::{Command, exit},
+};
 
 const SUCCESS: i32 = 0;
 const COMMAND_NOT_FOUND: i32 = 127;
@@ -14,12 +17,9 @@ impl App {
     }
 
     pub fn main_loop(&mut self) {
-        match self.download() {
-            Ok(_) => (),
-            Err(error) => {
-                println!("{error}, exiting now");
-                exit(1);
-            }
+        if let Err(error) =  self.download() {
+            println!("{error}, exiting now");
+            exit(1);
         }
         self.write_state_file();
         println!(
@@ -36,12 +36,17 @@ impl App {
 
 impl AnimeEntry {
     fn download(&mut self) -> Result<(), String> {
+        if !exists(self.get_target_directory()).expect("Can't read the filesystem") {
+            make_download_directory(self.get_target_directory());
+        }
+
         println!("Downloading {}", self.get_name());
         let args = self.get_download_arguments();
         let downloader = Command::new("ani-cli")
             .current_dir(self.get_target_directory())
             .args(args)
             .status();
+
         let code = match downloader {
             Ok(status_code) => status_code.code(),
             Err(error) => return Err(error.to_string()),

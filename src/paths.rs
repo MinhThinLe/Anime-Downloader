@@ -1,10 +1,10 @@
 use std::fs::{self, File, exists};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::exit;
 
-const CONFIG_PATH: &str = ".config/anime-dowloader/";
+const CONFIG_PATH: &str = ".config/anid/";
 const CONFIG_FILE: &str = "watchlist.toml";
-const STATE_PATH: &str = ".local/state/anime-downloader";
+const STATE_PATH: &str = ".local/state/anid/";
 const STATE_FILE: &str = "anime-downloader.state";
 
 const ERROR_UNREADABLE_FILESYSTEM: &str =
@@ -100,6 +100,19 @@ pub fn make_state() {
 
     if !state_file_exists {
         make_state_file();
+    }
+}
+
+pub fn make_download_directory(download_path: &Path) {
+    match fs::create_dir_all(&download_path) {
+        Ok(_) => (),
+        Err(error) => {
+            println!(
+                "Unable to create download directory {:?} due to {}, exiting now",
+                download_path, error
+            );
+            exit(1);
+        }
     }
 }
 
