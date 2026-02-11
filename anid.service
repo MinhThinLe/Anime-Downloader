@@ -1,8 +1,10 @@
 [Unit]
 Description=Download your favourite animes
+After=network.target
+Wants=network.target
 
 [Service]
-ExecStart=/usr/bin/anime-downloader
+ExecStart=/usr/bin/anid
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
