@@ -7,6 +7,7 @@ use toml::map::Map;
 use toml::{Table, Value};
 
 const DEFAULT_SLEEP_SECONDS: u64 = 24 * 60 * 60;
+const DEFAULT_DOWNLOAD_PATH: &str = "/tmp/anid/";
 
 #[derive(Debug, Default)]
 pub struct App {
@@ -17,6 +18,7 @@ pub struct App {
 #[derive(Debug)]
 pub struct Settings {
     sleep_duration: Duration,
+    dowload_location: PathBuf,
 }
 
 #[derive(Debug)]
@@ -37,20 +39,11 @@ fn get_entry_number(table: &Value) -> Option<u8> {
     Some(table.get("select")?.as_integer()? as u8)
 }
 
-fn get_sleep_time(table: &Value) -> u64 {
-    let Some(sleep_time) = table.get("sleep_secs") else {
-        return DEFAULT_SLEEP_SECONDS;
-    };
-    let Some(sleep_time) = sleep_time.as_integer() else {
-        return DEFAULT_SLEEP_SECONDS;
-    };
-    sleep_time as u64
-}
-
 impl Default for Settings {
     fn default() -> Self {
         Settings {
             sleep_duration: Duration::from_secs(DEFAULT_SLEEP_SECONDS),
+            dowload_location: PathBuf::from(DEFAULT_DOWNLOAD_PATH),
         }
     }
 }
@@ -58,6 +51,10 @@ impl Default for Settings {
 impl App {
     pub fn get_sleep_duration(&self) -> Duration {
         self.settings.sleep_duration
+    }
+
+    pub fn get_temp_path(&self) -> PathBuf {
+        self.settings.dowload_location.clone()
     }
 
     fn resume_from_state(&mut self) {
@@ -96,6 +93,8 @@ impl App {
                 app.watch_list.push(entry);
             }
         }
+
+        println!("Download path: {:?}", app.settings.dowload_location);
 
         app.resume_from_state();
         Ok(app)
@@ -159,8 +158,34 @@ impl AnimeEntry {
 }
 
 fn parse_settings(table: &Value) -> Settings {
+    fn get_sleep_time(table: &Value) -> u64 {
+        let Some(sleep_time) = table.get("sleep_secs") else {
+            return DEFAULT_SLEEP_SECONDS;
+        };
+        let Some(sleep_time) = sleep_time.as_integer() else {
+            return DEFAULT_SLEEP_SECONDS;
+        };
+        sleep_time as u64
+    }
+
+    fn get_temp_path(table: &Value) -> PathBuf {
+        let Some(path) = table.get("temp_path") else {
+            return DEFAULT_DOWNLOAD_PATH.into();
+        };
+        let Some(path) = path.as_str() else {
+            println!(
+                "Warning: {:?} isn't a valid path, defaulting to {}",
+                path, DEFAULT_DOWNLOAD_PATH
+            );
+            return DEFAULT_DOWNLOAD_PATH.into();
+        };
+
+        return path.into();
+    }
+
     Settings {
         sleep_duration: Duration::from_secs(get_sleep_time(table)),
+        dowload_location: get_temp_path(table),
     }
 }
 

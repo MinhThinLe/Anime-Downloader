@@ -1,8 +1,9 @@
-use crate::{AnimeEntry, App, paths::make_download_directory};
-use std::{
-    fs::exists,
-    process::{Command, exit},
-};
+use std::fs::exists;
+use std::path::Path;
+use std::process::{Command, exit};
+
+use crate::paths::make_directory;
+use crate::{AnimeEntry, App};
 
 const SUCCESS: i32 = 0;
 const COMMAND_NOT_FOUND: i32 = 127;
@@ -10,8 +11,14 @@ const FAILURE: i32 = 1;
 
 impl App {
     fn download(&mut self) -> Result<(), String> {
+        let temp_path = self.get_temp_path();
+
+        if !exists(&temp_path).expect("Can't read the filesystem") {
+            make_directory(&self.get_temp_path());
+        }
+
         for entry in self.watch_list.iter_mut() {
-            entry.download()?;
+            entry.download(&temp_path)?;
         }
         Ok(())
     }
@@ -35,15 +42,11 @@ impl App {
 }
 
 impl AnimeEntry {
-    fn download(&mut self) -> Result<(), String> {
-        if !exists(self.get_target_directory()).expect("Can't read the filesystem") {
-            make_download_directory(self.get_target_directory());
-        }
-
+    fn download(&mut self, download_path: &Path) -> Result<(), String> {
         println!("Downloading {}", self.get_name());
         let args = self.get_download_arguments();
         let downloader = Command::new("ani-cli")
-            .current_dir(self.get_target_directory())
+            .current_dir(download_path)
             .args(args)
             .status();
 

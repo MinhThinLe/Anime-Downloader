@@ -1,6 +1,7 @@
 [config]
 # Sleeps for 1 day before checking again
 sleep_secs = 86400
+temp_path = "/tmp/anid"
 
 # This can be any string without spaces and isn't config 
 [sousou_no_frieren_SS2]

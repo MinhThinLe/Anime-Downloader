@@ -109,13 +109,13 @@ pub fn make_state() {
     }
 }
 
-pub fn make_download_directory(download_path: &Path) {
-    match fs::create_dir_all(&download_path) {
+pub fn make_directory(directory: &Path) {
+    match fs::create_dir_all(directory) {
         Ok(_) => (),
         Err(error) => {
             println!(
-                "Unable to create download directory {:?} due to {}, exiting now",
-                download_path, error
+                "Unable to create directory {:?} due to {}, exiting now",
+                directory, error
             );
             exit(1);
         }
