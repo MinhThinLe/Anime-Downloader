@@ -28,15 +28,12 @@ pub struct AnimeEntry {
     current_episode: u16,
     target_dir: PathBuf,
     entry_number: Option<u8>,
+    rename_pattern: Option<String>,
 }
 
 #[derive(Debug)]
 pub enum ParseError {
     InvalidTOML,
-}
-
-fn get_entry_number(table: &Value) -> Option<u8> {
-    Some(table.get("select")?.as_integer()? as u8)
 }
 
 impl Default for Settings {
@@ -94,8 +91,6 @@ impl App {
             }
         }
 
-        println!("Download path: {:?}", app.settings.dowload_location);
-
         app.resume_from_state();
         Ok(app)
     }
@@ -103,17 +98,40 @@ impl App {
 
 impl AnimeEntry {
     fn from_config_table(id: String, table: Value) -> Option<Self> {
+        fn get_entry_number(table: &Value) -> Option<u8> {
+            Some(table.get("select")?.as_integer()? as u8)
+        }
+
+        fn get_rename_pattern(table: &Value) -> Option<String> {
+            let Some(pattern) = table.get("rename") else {
+                return None;
+            };
+
+            let Some(pattern) = pattern.as_str() else {
+                println!("Warning: rename must be a string");
+                return None;
+            };
+
+            if pattern.is_empty() {
+                return None;
+            }
+
+            Some(pattern.to_string())
+        }
+
         let name = table.get("name")?.as_str()?.into();
         let target_dir = table.get("directory")?.as_str()?.into();
         let id = id.into();
 
         let entry_number = get_entry_number(&table);
+        let rename_pattern = get_rename_pattern(&table);
 
         Some(Self {
             id,
             name,
             entry_number,
             target_dir,
+            rename_pattern,
             current_episode: 1,
         })
     }
@@ -154,6 +172,10 @@ impl AnimeEntry {
 
     pub fn get_current_episode(&self) -> u16 {
         self.current_episode
+    }
+
+    pub fn get_rename_pattern(&self) -> Option<&str> {
+        self.rename_pattern.as_deref()
     }
 }
 

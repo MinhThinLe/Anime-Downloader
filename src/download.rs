@@ -1,4 +1,4 @@
-use std::fs::exists;
+use std::fs::{ReadDir, copy, exists, read_dir, remove_file, rename};
 use std::path::Path;
 use std::process::{Command, exit};
 
@@ -18,7 +18,19 @@ impl App {
         }
 
         for entry in self.watch_list.iter_mut() {
-            entry.download(&temp_path)?;
+            let downloaded = entry.download(&temp_path)?;
+            if !downloaded {
+                continue;
+            }
+            if !exists(entry.get_target_directory()).expect("Can't read the filesystem") {
+                make_directory(entry.get_target_directory());
+            }
+            if entry.get_rename_pattern().is_some() {
+                rename_downloaded_files(&temp_path, entry);
+            }
+            move_downloaded_files(&temp_path, entry);
+
+            entry.next_episode();
         }
         Ok(())
     }
@@ -42,8 +54,12 @@ impl App {
 }
 
 impl AnimeEntry {
-    fn download(&mut self, download_path: &Path) -> Result<(), String> {
-        println!("Downloading {}", self.get_name());
+    fn download(&mut self, download_path: &Path) -> Result<bool, String> {
+        println!(
+            "Downloading episode {} of {}",
+            self.get_current_episode(),
+            self.get_name()
+        );
         let args = self.get_download_arguments();
         let downloader = Command::new("ani-cli")
             .current_dir(download_path)
@@ -59,12 +75,59 @@ impl AnimeEntry {
         };
 
         match code {
-            SUCCESS => self.next_episode(),
-            COMMAND_NOT_FOUND => println!("ani-cli executable not found, maybe try installing it?"),
+            SUCCESS => return Ok(true),
             FAILURE => (),
+            COMMAND_NOT_FOUND => println!("ani-cli executable not found, maybe try installing it?"),
             code => println!("Unknown return code {code}"),
         };
 
-        Ok(())
+        Ok(false)
+    }
+}
+
+fn list_files(path: &Path) -> ReadDir {
+    let Ok(files) = read_dir(path) else {
+        println!("Unable to read temporary directory {:?}, exiting now", path);
+        exit(1);
+    };
+    files
+}
+
+fn rename_downloaded_files(temp_path: &Path, downloaded_entry: &AnimeEntry) {
+    let files = list_files(temp_path);
+    for file in files {
+        let file = file.expect("Huh?");
+        let path = file.path();
+        if path.is_dir() {
+            continue;
+        }
+        let extension = path
+            .extension()
+            .expect("Item should have a file extension")
+            .to_string_lossy();
+        let new_name = format!("{}.{}", downloaded_entry.get_new_name(), extension);
+        let mut new_path = path.parent().expect("Shouldn't be at root").to_path_buf();
+        new_path.push(new_name);
+        rename(&path, &new_path).expect("Unable to rename file(s)");
+    }
+}
+
+fn move_downloaded_files(temp_path: &Path, downloaded_entry: &AnimeEntry) {
+    let files = list_files(temp_path);
+    for file in files {
+        let file = file.expect("Huh?");
+        let old_path = file.path();
+        if old_path.is_dir() {
+            continue;
+        }
+        let file_name = old_path.file_name().expect("Can't read filename");
+        let mut new_path = downloaded_entry.get_target_directory().to_path_buf();
+        new_path.push(file_name);
+
+        if let Err(_) = rename(&old_path, &new_path) {
+            copy(&old_path, &new_path).expect("Unable to copy file");
+            remove_file(&old_path).expect("Unable to remove file");
+            continue;
+        }
     }
 }
