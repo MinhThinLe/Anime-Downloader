@@ -49,6 +49,7 @@ name = "anime_name"
 directory = "target_directory"
 select = entry_number
 current_episode = episode_number
+rename = "Sousou no Frieren Season 2 Episode {episode+x}"
 ```
 where:
 - `id` is a valid TOML table name (and isn't "config" for obvious reasons)
@@ -59,6 +60,9 @@ where:
   titles
 - `episode_number` is the episode number to begin download (the program will
   automatically increment this number)
+
+For more info on `rename`, please read the config example located in
+`examples/watchlist.toml`
 
 ## Usage
 
