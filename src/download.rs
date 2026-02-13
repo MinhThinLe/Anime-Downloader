@@ -137,6 +137,6 @@ fn cleanup(temp_path: &Path) {
     let files = list_files(temp_path);
     for file in files {
         let file = file.expect("Huh?");
-        remove_file(file.path()).expect("WHAT?") ;
+        remove_file(file.path()).expect("WHAT?");
     }
 }

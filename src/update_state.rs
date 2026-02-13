@@ -10,13 +10,9 @@ impl App {
     pub fn write_state_file(&self) {
         let state_file_path = get_state_file_path();
 
-        let error = write(state_file_path, self.to_string());
-        match error {
-            Ok(_) => (),
-            Err(_) => {
-                make_state();
-                self.write_state_file();
-            }
+        if let Err(_) = write(state_file_path, self.to_string()) {
+            make_state();
+            self.write_state_file();
         }
     }
 }
